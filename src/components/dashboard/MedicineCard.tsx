@@ -9,23 +9,38 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '../ui/badge';
 import { useState } from 'react';
 import { useToast } from '../ui/use-toast';
+import { Loader2 } from 'lucide-react';
 
 interface MedicineCardProps {
   medicine: Medicine;
   time: string;
   isPending: boolean;
+  updateIntake: (medicineId: string, medicineName: string, scheduledAt: string, status: 'taken' | 'missed') => Promise<any>;
 }
 
-export default function MedicineCard({ medicine, time, isPending }: MedicineCardProps) {
+export default function MedicineCard({ medicine, time, isPending, updateIntake }: MedicineCardProps) {
   const [taken, setTaken] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
 
-  const handleTake = () => {
-    setTaken(true);
-    toast({
-        title: "Dose Confirmed!",
-        description: `You've earned 10 points for taking ${medicine.name}.`,
-    })
+  const handleTake = async () => {
+    setIsSubmitting(true);
+    try {
+        await updateIntake(medicine.id, medicine.name, time, 'taken');
+        setTaken(true);
+        toast({
+            title: "Dose Confirmed!",
+            description: `You've earned 10 points for taking ${medicine.name}.`,
+        });
+    } catch (error) {
+        toast({
+            variant: "destructive",
+            title: "Update Failed",
+            description: "Could not update your intake status.",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   const status = taken ? 'Taken' : isPending ? 'Pending' : 'Missed';
@@ -64,7 +79,9 @@ export default function MedicineCard({ medicine, time, isPending }: MedicineCard
           </p>
         </div>
         {isPending && !taken && (
-            <Button onClick={handleTake} className="rounded-full">Take</Button>
+            <Button onClick={handleTake} className="rounded-full" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="animate-spin" /> : 'Take'}
+            </Button>
         )}
       </CardContent>
     </Card>

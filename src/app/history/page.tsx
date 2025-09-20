@@ -1,6 +1,6 @@
 import AppLayout from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { mockHistory } from "@/lib/mock-data";
+import { getHistory } from "@/services/firestore";
 import { MedicineIntake } from "@/lib/types";
 import { CheckCircle2, XCircle, Pill } from "lucide-react";
 import { format, isToday, isYesterday, parseISO } from 'date-fns';
@@ -24,8 +24,9 @@ const formatDateHeading = (dateStr: string) => {
 }
 
 
-export default function HistoryPage() {
-    const groupedHistory = groupHistoryByDate(mockHistory);
+export default async function HistoryPage() {
+    const history = await getHistory();
+    const groupedHistory = groupHistoryByDate(history);
     const sortedDates = Object.keys(groupedHistory).sort((a,b) => b.localeCompare(a));
     
   return (
@@ -39,7 +40,7 @@ export default function HistoryPage() {
         </div>
         
         <div className="space-y-6">
-            {sortedDates.map(date => (
+            {sortedDates.length > 0 ? sortedDates.map(date => (
                 <div key={date}>
                     <h2 className="font-bold mb-2">{formatDateHeading(date)}</h2>
                     <div className="space-y-2">
@@ -68,7 +69,13 @@ export default function HistoryPage() {
                     ))}
                     </div>
                 </div>
-            ))}
+            )) : (
+                <Card>
+                    <CardContent className="p-8 text-center text-muted-foreground">
+                        No history found. Start taking your medicine to see your progress!
+                    </CardContent>
+                </Card>
+            )}
         </div>
       </div>
     </AppLayout>

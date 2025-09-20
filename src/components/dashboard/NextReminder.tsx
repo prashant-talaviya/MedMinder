@@ -5,10 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useEffect, useState } from "react";
 import { Medicine } from "@/lib/types";
 
-interface NextReminderProps {
-    medicines: Medicine[];
-}
-
 const getNextDose = (medicines: Medicine[]) => {
     const now = new Date();
     let nextDoseTime: Date | null = null;
@@ -30,7 +26,7 @@ const getNextDose = (medicines: Medicine[]) => {
     });
 
     // If no dose today, find the first dose tomorrow
-    if (!nextDoseTime) {
+    if (!nextDoseTime && medicines.length > 0) {
         medicines.forEach(med => {
              med.schedule.forEach(timeStr => {
                 const [hours, minutes] = timeStr.split(':').map(Number);
@@ -52,10 +48,17 @@ const getNextDose = (medicines: Medicine[]) => {
 
 export default function NextReminder({ medicines }: NextReminderProps) {
     const [timeLeft, setTimeLeft] = useState('');
-    const { nextDoseTime, nextDoseMedicine } = getNextDose(medicines);
+    const [{nextDoseTime, nextDoseMedicine}, setNextDose] = useState(getNextDose(medicines));
     
     useEffect(() => {
-        if (!nextDoseTime) return;
+        setNextDose(getNextDose(medicines));
+    }, [medicines]);
+
+    useEffect(() => {
+        if (!nextDoseTime) {
+             setTimeLeft('');
+             return;
+        };
 
         const interval = setInterval(() => {
             const now = new Date();
@@ -85,7 +88,7 @@ export default function NextReminder({ medicines }: NextReminderProps) {
                     <CardTitle className="text-lg font-headline">Next Reminder</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <p className="text-muted-foreground">No upcoming doses.</p>
+                    <p className="text-muted-foreground">No upcoming doses. Add a medicine to get started!</p>
                 </CardContent>
             </Card>
         );
@@ -103,4 +106,8 @@ export default function NextReminder({ medicines }: NextReminderProps) {
             </CardContent>
         </Card>
     )
+}
+
+interface NextReminderProps {
+    medicines: Medicine[];
 }

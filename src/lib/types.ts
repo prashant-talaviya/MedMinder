@@ -18,6 +18,7 @@ export interface Medicine {
   duration: number; // in days
   quantity: number;
   photoUrl: string;
+  createdAt: any;
 }
 
 export interface MedicineIntake {

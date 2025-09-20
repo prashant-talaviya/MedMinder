@@ -15,8 +15,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/components/ui/use-toast';
-import { analyzeMedicineImage } from './actions';
+import { analyzeMedicineImage, addMedicine } from './actions';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 const scheduleTimings = [
   { id: 'morning', label: 'Morning (9 AM)', value: '09:00' },
@@ -38,10 +39,12 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 export function AddMedicineForm() {
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>("https://picsum.photos/seed/med-placeholder/200/200");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
+  const { user } = useAuth();
 
   const {
     register,
@@ -103,13 +106,34 @@ export function AddMedicineForm() {
     }
   };
 
-  const onSubmit = (data: FormData) => {
-    console.log(data);
-    toast({
-        title: "Medicine Added!",
-        description: `${data.name} has been added to your schedule.`,
+  const onSubmit = async (data: FormData) => {
+    if (!user) {
+        toast({ variant: 'destructive', title: "Not Authenticated", description: "You must be logged in to add medicine."});
+        return;
+    }
+    setIsSubmitting(true);
+
+    const result = await addMedicine({
+        ...data,
+        photoUrl: imagePreview,
+        userId: user.uid,
     });
-    router.push('/dashboard');
+    
+    setIsSubmitting(false);
+
+    if (result.success) {
+        toast({
+            title: "Medicine Added!",
+            description: `${data.name} has been added to your schedule.`,
+        });
+        router.push('/dashboard');
+    } else {
+        toast({
+            variant: "destructive",
+            title: "Failed to Add Medicine",
+            description: result.error,
+        });
+    }
   };
 
   return (
@@ -219,7 +243,10 @@ export function AddMedicineForm() {
           <Textarea id="description" {...register('description')} disabled placeholder="AI-generated description will appear here" />
         </div>
 
-        <Button type="submit" size="lg" className="w-full rounded-full">Add Medicine</Button>
+        <Button type="submit" size="lg" className="w-full rounded-full" disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="animate-spin" />}
+            Add Medicine
+        </Button>
       </div>
     </form>
   );
