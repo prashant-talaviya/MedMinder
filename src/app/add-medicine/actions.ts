@@ -47,7 +47,7 @@ const addMedicineSchema = z.object({
   schedule: z.array(z.string()).min(1, 'At least one schedule time must be selected.'),
   duration: z.coerce.number().min(1, 'Duration must be at least 1 day.'),
   quantity: z.coerce.number().min(1, 'Quantity is required.'),
-  photoUrl: z.string().min(1, 'A photo is required.'),
+  photoUrl: z.string().nullable(),
   userId: z.string().min(1, 'User ID is required.'),
 });
 
@@ -57,6 +57,7 @@ export async function addMedicine(data: unknown) {
 
         await addDoc(collection(db, 'medicines'), {
             ...parsedData,
+            photoUrl: parsedData.photoUrl || "https://picsum.photos/seed/med-placeholder/200/200", // Fallback image
             createdAt: serverTimestamp(),
         });
 
