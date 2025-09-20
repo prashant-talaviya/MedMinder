@@ -18,15 +18,6 @@ import { useToast } from '@/hooks/use-toast';
 import { analyzeMedicineImage, addMedicine } from './actions';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogTrigger,
-  DialogClose,
-} from '@/components/ui/dialog';
 
 const defaultSchedules = [
   { id: 'morning', label: 'Morning', time: '09:00' },
@@ -123,8 +114,7 @@ export function AddMedicineForm() {
 
   const handleAddTime = () => {
     if (customTime && !scheduleTimings.find(s => s.time === customTime)) {
-      setScheduleTimings([...scheduleTimings, { id: `custom-${customTime}`, label: `Custom`, time: customTime }]);
-      // Automatically select the new time
+      setScheduleTimings([...scheduleTimings, { id: `custom-${customTime}`, label: customTime, time: customTime }]);
       const newSchedules = [...(selectedSchedules || []), customTime];
       setValue('schedule', newSchedules, { shouldValidate: true });
       setCustomTime('');
@@ -134,6 +124,16 @@ export function AddMedicineForm() {
   const handleRemoveTime = (timeToRemove: string) => {
     setScheduleTimings(scheduleTimings.filter(s => s.time !== timeToRemove));
     setValue('schedule', (selectedSchedules || []).filter(t => t !== timeToRemove), { shouldValidate: true });
+  }
+
+  const handleTimeChange = (id: string, newTime: string) => {
+    const oldTime = scheduleTimings.find(s => s.id === id)?.time;
+    setScheduleTimings(scheduleTimings.map(s => s.id === id ? { ...s, time: newTime } : s));
+    
+    // Update the selected schedule if the time was changed
+    if (selectedSchedules.includes(oldTime!)) {
+      setValue('schedule', selectedSchedules.map(t => t === oldTime ? newTime : t), { shouldValidate: true });
+    }
   }
 
   const onSubmit = async (data: FormData) => {
@@ -234,9 +234,9 @@ export function AddMedicineForm() {
                 name="schedule"
                 control={control}
                 render={({ field }) => (
-                    <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    <div className="mt-2 space-y-2">
                         {scheduleTimings.map(item => (
-                            <div key={item.id} className="flex items-center space-x-2 p-2 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
+                            <div key={item.id} className="flex items-center gap-2 p-2 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
                                 <Checkbox
                                     id={item.id}
                                     checked={field.value?.includes(item.time)}
@@ -246,11 +246,15 @@ export function AddMedicineForm() {
                                         : field.onChange(field.value?.filter((v) => v !== item.time))
                                     }}
                                 />
-                                <label htmlFor={item.id} className="text-sm font-medium leading-none cursor-pointer flex-1">
-                                    {item.label} ({new Date(`1970-01-01T${item.time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
-                                </label>
+                                <Label htmlFor={item.id} className="flex-1 cursor-pointer">{item.id.startsWith('custom-') ? 'Custom' : item.label}</Label>
+                                <Input 
+                                  type="time" 
+                                  value={item.time}
+                                  onChange={(e) => handleTimeChange(item.id, e.target.value)}
+                                  className="w-[120px]"
+                                />
                                  {item.id.startsWith('custom-') && (
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveTime(item.time)}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveTime(item.time)}>
                                       <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
                                 )}
@@ -295,5 +299,3 @@ export function AddMedicineForm() {
     </form>
   );
 }
-
-    
