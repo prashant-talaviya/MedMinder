@@ -6,10 +6,6 @@ import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { revalidatePath } from "next/cache";
 
-const actionSchema = z.object({
-  photoDataUri: z.string(),
-});
-
 export async function analyzeMedicineImage(formData: FormData) {
   try {
     const rawPhotoData = formData.get('photoDataUri');
@@ -17,12 +13,8 @@ export async function analyzeMedicineImage(formData: FormData) {
     if (!rawPhotoData || typeof rawPhotoData !== 'string') {
         throw new Error('No photo data provided.');
     }
-
-    const input = actionSchema.parse({
-      photoDataUri: rawPhotoData,
-    });
     
-    const result = await extractMedicineDetails({ photoDataUri: input.photoDataUri });
+    const result = await extractMedicineDetails({ photoDataUri: rawPhotoData });
 
     return {
       success: true,
@@ -57,7 +49,8 @@ export async function addMedicine(data: unknown) {
 
         await addDoc(collection(db, 'medicines'), {
             ...parsedData,
-            photoUrl: parsedData.photoUrl || "https://picsum.photos/seed/med-placeholder/200/200", // Fallback image
+            // Ensure photoUrl is never null when writing to Firestore
+            photoUrl: parsedData.photoUrl || "https://picsum.photos/seed/med-placeholder/200/200", 
             createdAt: serverTimestamp(),
         });
 
