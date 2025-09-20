@@ -59,9 +59,14 @@ export function AddMedicineForm() {
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: '',
+      dosage: '',
+      use: '',
       timing: 'after-food',
       schedule: [],
       description: '',
+      duration: 0,
+      quantity: 0
     },
   });
   
@@ -292,8 +297,7 @@ export function AddMedicineForm() {
         </div>
 
         <Button type="submit" size="lg" className="w-full rounded-full" disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="animate-spin" />}
-            Add Medicine
+            {isSubmitting ? <Loader2 className="animate-spin" /> : 'Add Medicine'}
         </Button>
       </div>
     </form>
