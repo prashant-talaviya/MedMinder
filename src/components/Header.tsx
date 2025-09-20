@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
@@ -10,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, PlusCircle, UserCircle } from 'lucide-react';
+import { LogOut, PlusCircle, UserCircle, Search, History } from 'lucide-react';
 import { Button } from './ui/button';
 import Link from 'next/link';
 
@@ -22,6 +23,25 @@ export default function Header() {
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         <h1 className="text-xl font-bold text-primary font-headline">MedMinder</h1>
         <div className="flex items-center gap-4">
+           <nav className="hidden md:flex items-center gap-2">
+             <Button variant="ghost" asChild>
+                <Link href="/dashboard">
+                    Dashboard
+                </Link>
+             </Button>
+             <Button variant="ghost" asChild>
+                <Link href="/lookup">
+                    <Search className="mr-2" />
+                    Lookup
+                </Link>
+             </Button>
+             <Button variant="ghost" asChild>
+                <Link href="/history">
+                    <History className="mr-2" />
+                    History
+                </Link>
+             </Button>
+            </nav>
           <Button asChild className="hidden md:inline-flex rounded-full" size="sm">
             <Link href="/add-medicine">
               <PlusCircle />

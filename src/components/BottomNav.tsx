@@ -1,13 +1,15 @@
+
 'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, PlusCircle, History } from 'lucide-react';
+import { Home, PlusCircle, History, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Home' },
   { href: '/add-medicine', icon: PlusCircle, label: 'Add' },
+  { href: '/lookup', icon: Search, label: 'Lookup' },
   { href: '/history', icon: History, label: 'History' },
 ];
 
@@ -24,7 +26,7 @@ export default function BottomNav() {
               key={item.href}
               href={item.href}
               className={cn(
-                'flex flex-col items-center justify-center gap-1 transition-colors',
+                'flex flex-col items-center justify-center gap-1 transition-colors w-1/4',
                 isActive ? 'text-primary' : 'text-muted-foreground hover:text-primary/80'
               )}
             >
