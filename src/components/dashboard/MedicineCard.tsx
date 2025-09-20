@@ -6,9 +6,9 @@ import { Pill, Clock } from 'lucide-react';
 import { Medicine } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '../ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
-import { useToast } from '../ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 interface MedicineCardProps {
