@@ -251,5 +251,3 @@ export function AddMedicineForm() {
     </form>
   );
 }
-
-    
