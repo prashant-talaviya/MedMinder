@@ -12,8 +12,14 @@ const actionSchema = z.object({
 
 export async function analyzeMedicineImage(formData: FormData) {
   try {
+    const rawPhotoData = formData.get('photoDataUri');
+    
+    if (!rawPhotoData || typeof rawPhotoData !== 'string') {
+        throw new Error('No photo data provided.');
+    }
+
     const input = actionSchema.parse({
-      photoDataUri: formData.get('photoDataUri'),
+      photoDataUri: rawPhotoData,
     });
     
     const result = await extractMedicineDetails({ photoDataUri: input.photoDataUri });
@@ -41,7 +47,7 @@ const addMedicineSchema = z.object({
   schedule: z.array(z.string()).min(1, 'At least one schedule time must be selected.'),
   duration: z.coerce.number().min(1, 'Duration must be at least 1 day.'),
   quantity: z.coerce.number().min(1, 'Quantity is required.'),
-  photoUrl: z.string().url('A photo URL is required.'),
+  photoUrl: z.string().min(1, 'A photo is required.'),
   userId: z.string().min(1, 'User ID is required.'),
 });
 
