@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { Camera, Loader2 } from 'lucide-react';
+import { Camera, Loader2, Clock, Trash2, PlusCircle } from 'lucide-react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -18,11 +18,20 @@ import { useToast } from '@/hooks/use-toast';
 import { analyzeMedicineImage, addMedicine } from './actions';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog';
 
-const scheduleTimings = [
-  { id: 'morning', label: 'Morning (9 AM)', value: '09:00' },
-  { id: 'noon', label: 'Noon (2 PM)', value: '14:00' },
-  { id: 'evening', label: 'Evening (9 PM)', value: '21:00' },
+const defaultSchedules = [
+  { id: 'morning', label: 'Morning', time: '09:00' },
+  { id: 'noon', label: 'Noon', time: '14:00' },
+  { id: 'evening', label: 'Evening', time: '21:00' },
 ];
 
 const formSchema = z.object({
@@ -42,6 +51,9 @@ export function AddMedicineForm() {
   const [imagePreview, setImagePreview] = useState<string | null>("https://picsum.photos/seed/med-placeholder/200/200");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [scheduleTimings, setScheduleTimings] = useState(defaultSchedules);
+  const [customTime, setCustomTime] = useState('');
+
   const { toast } = useToast();
   const router = useRouter();
   const { user } = useAuth();
@@ -51,6 +63,7 @@ export function AddMedicineForm() {
     handleSubmit,
     control,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -60,6 +73,8 @@ export function AddMedicineForm() {
       description: '',
     },
   });
+  
+  const selectedSchedules = watch('schedule');
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -105,6 +120,21 @@ export function AddMedicineForm() {
       setIsAnalyzing(false);
     }
   };
+
+  const handleAddTime = () => {
+    if (customTime && !scheduleTimings.find(s => s.time === customTime)) {
+      setScheduleTimings([...scheduleTimings, { id: `custom-${customTime}`, label: `Custom`, time: customTime }]);
+      // Automatically select the new time
+      const newSchedules = [...(selectedSchedules || []), customTime];
+      setValue('schedule', newSchedules, { shouldValidate: true });
+      setCustomTime('');
+    }
+  }
+
+  const handleRemoveTime = (timeToRemove: string) => {
+    setScheduleTimings(scheduleTimings.filter(s => s.time !== timeToRemove));
+    setValue('schedule', (selectedSchedules || []).filter(t => t !== timeToRemove), { shouldValidate: true });
+  }
 
   const onSubmit = async (data: FormData) => {
     if (!user) {
@@ -204,24 +234,38 @@ export function AddMedicineForm() {
                 name="schedule"
                 control={control}
                 render={({ field }) => (
-                    <div className="mt-2 grid grid-cols-3 gap-2">
+                    <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 gap-2">
                         {scheduleTimings.map(item => (
-                            <div key={item.id} className="flex items-center space-x-2 p-2 border rounded-md">
+                            <div key={item.id} className="flex items-center space-x-2 p-2 border rounded-md has-[:checked]:bg-primary/10 has-[:checked]:border-primary transition-colors">
                                 <Checkbox
                                     id={item.id}
-                                    checked={field.value?.includes(item.value)}
+                                    checked={field.value?.includes(item.time)}
                                     onCheckedChange={(checked) => {
                                         return checked
-                                        ? field.onChange([...(field.value || []), item.value])
-                                        : field.onChange(field.value?.filter((v) => v !== item.value))
+                                        ? field.onChange([...(field.value || []), item.time])
+                                        : field.onChange(field.value?.filter((v) => v !== item.time))
                                     }}
                                 />
-                                <label htmlFor={item.id} className="text-sm font-medium leading-none">{item.label}</label>
+                                <label htmlFor={item.id} className="text-sm font-medium leading-none cursor-pointer flex-1">
+                                    {item.label} ({new Date(`1970-01-01T${item.time}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})
+                                </label>
+                                 {item.id.startsWith('custom-') && (
+                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveTime(item.time)}>
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                )}
                             </div>
                         ))}
                     </div>
                 )}
             />
+            <div className="mt-2 flex gap-2">
+              <Input type="time" value={customTime} onChange={e => setCustomTime(e.target.value)} className="max-w-[150px]" />
+              <Button type="button" variant="outline" onClick={handleAddTime} disabled={!customTime}>
+                <PlusCircle className="mr-2" />
+                Add Time
+              </Button>
+            </div>
             {errors.schedule && <p className="text-destructive text-sm mt-1">{errors.schedule.message}</p>}
         </div>
         
@@ -251,3 +295,5 @@ export function AddMedicineForm() {
     </form>
   );
 }
+
+    
