@@ -1,3 +1,5 @@
+'use client';
+
 import AppLayout from "@/components/AppLayout";
 import MedicineCard from "@/components/dashboard/MedicineCard";
 import NextReminder from "@/components/dashboard/NextReminder";
@@ -5,17 +7,51 @@ import RewardsSummary from "@/components/dashboard/RewardsSummary";
 import { getMedicines, getUserStats, updateIntake } from "@/services/firestore";
 import { Medicine } from "@/lib/types";
 import { getTodaysSchedule } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
+import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default async function DashboardPage() {
-    const medicines = await getMedicines();
-    const { points, streak } = await getUserStats();
+export default function DashboardPage() {
+    const { user } = useAuth();
+    const [medicines, setMedicines] = useState<Medicine[]>([]);
+    const [stats, setStats] = useState({ points: 0, streak: 0 });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        if (user) {
+            const fetchData = async () => {
+                setLoading(true);
+                const [medicinesData, statsData] = await Promise.all([
+                    getMedicines(user.uid),
+                    getUserStats(user.uid)
+                ]);
+                setMedicines(medicinesData);
+                setStats(statsData);
+                setLoading(false);
+            };
+            fetchData();
+        }
+    }, [user]);
+
+    if (loading) {
+        return (
+            <AppLayout>
+                <div className="space-y-6">
+                    <Skeleton className="h-36 w-full" />
+                    <Skeleton className="h-24 w-full" />
+                    <Skeleton className="h-44 w-full" />
+                </div>
+            </AppLayout>
+        )
+    }
+
     const todaysSchedule = getTodaysSchedule(medicines);
     const now = new Date();
 
     return (
         <AppLayout>
             <div className="space-y-6">
-                <RewardsSummary points={points} streak={streak} />
+                <RewardsSummary points={stats.points} streak={stats.streak} />
                 <NextReminder medicines={medicines} />
                 
                 <div>
@@ -36,6 +72,7 @@ export default async function DashboardPage() {
                                         time={dose.time}
                                         isPending={doseTime >= now}
                                         updateIntake={updateIntake}
+                                        userId={user!.uid}
                                     />
                                 );
                             })

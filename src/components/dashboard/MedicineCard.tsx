@@ -15,10 +15,11 @@ interface MedicineCardProps {
   medicine: Medicine;
   time: string;
   isPending: boolean;
-  updateIntake: (medicineId: string, medicineName: string, scheduledAt: string, status: 'taken' | 'missed') => Promise<any>;
+  updateIntake: (userId: string, medicineId: string, medicineName: string, scheduledAt: string, status: 'taken' | 'missed') => Promise<any>;
+  userId: string;
 }
 
-export default function MedicineCard({ medicine, time, isPending, updateIntake }: MedicineCardProps) {
+export default function MedicineCard({ medicine, time, isPending, updateIntake, userId }: MedicineCardProps) {
   const [taken, setTaken] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
@@ -26,7 +27,7 @@ export default function MedicineCard({ medicine, time, isPending, updateIntake }
   const handleTake = async () => {
     setIsSubmitting(true);
     try {
-        await updateIntake(medicine.id, medicine.name, time, 'taken');
+        await updateIntake(userId, medicine.id, medicine.name, time, 'taken');
         setTaken(true);
         toast({
             title: "Dose Confirmed!",

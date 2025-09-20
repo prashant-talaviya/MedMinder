@@ -3,18 +3,27 @@
 import { User } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { auth, onAuthStateChanged } from '@/lib/firebase';
-import type { User as FirebaseUser } from 'firebase/auth';
-import { Award } from 'lucide-react';
 
 interface AuthContextType {
   user: User | null;
-  login: (name: string) => void;
+  login: (name: string, email: string) => void;
   logout: () => void;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Simple hashing function for a mock user ID
+const simpleHash = (s: string) => {
+  let hash = 0;
+  for (let i = 0; i < s.length; i++) {
+    const char = s.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return 'user_' + Math.abs(hash).toString(16);
+};
+
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -22,43 +31,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser: FirebaseUser | null) => {
-      if (firebaseUser) {
-        // For this demo, we'll keep using a simplified user object stored in localStorage
-        // to retain the name, as anonymous auth doesn't have display names by default.
+    // Check for a logged-in user in localStorage on initial load
+    try {
         const storedUser = localStorage.getItem('medminder-user');
         if (storedUser) {
           const parsedUser: User = JSON.parse(storedUser);
-          if(parsedUser.uid === firebaseUser.uid) {
-            setUser(parsedUser);
-          } else {
-            // If the UID doesn't match, something is wrong. Clear it.
-             localStorage.removeItem('medminder-user');
-             // We'll handle this case as a new user in the login function
-          }
+          setUser(parsedUser);
         }
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
-    return () => unsubscribe();
+    } catch (error) {
+        console.error("Failed to parse user from localStorage", error);
+        localStorage.removeItem('medminder-user');
+    }
+    setLoading(false);
   }, []);
 
 
-  const login = (name: string) => {
-    const firebaseUser = auth.currentUser;
-    if (!firebaseUser) {
-        // This should not happen if anonymous sign-in worked.
-        console.error("No firebase user found");
-        return;
-    }
-
+  const login = (name: string, email: string) => {
     const mockUser: User = {
-      uid: firebaseUser.uid,
+      uid: simpleHash(email), // Create a consistent mock UID from the email
       name: name,
-      email: `${name.toLowerCase().replace(' ', '.')}@example.com`,
-      avatarUrl: 'https://picsum.photos/seed/avatar1/100/100',
+      email: email,
+      avatarUrl: `https://i.pravatar.cc/150?u=${simpleHash(email)}`,
     };
     localStorage.setItem('medminder-user', JSON.stringify(mockUser));
     setUser(mockUser);
@@ -68,7 +61,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     localStorage.removeItem('medminder-user');
     setUser(null);
-    auth.signOut();
     router.push('/');
   };
 

@@ -1,22 +1,11 @@
 'use server';
 
-import { auth, db } from '@/lib/firebase';
-import { Medicine, MedicineIntake, User } from '@/lib/types';
+import { db } from '@/lib/firebase';
+import { Medicine, MedicineIntake } from '@/lib/types';
 import { collection, getDocs, query, where, addDoc, serverTimestamp, doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
-async function getUserId(): Promise<string | null> {
-    // This is a workaround to get the currently signed-in user on the server.
-    // In a real app, you would have a more robust session management system.
-    // For this demo, we'll rely on the client-side auth state which is not ideal for server actions.
-    // A proper solution would involve session cookies or passing auth tokens.
-    // Since we are using anonymous auth, we can't easily get the user on the server.
-    // The client will pass the userId when it can.
-    return auth.currentUser?.uid || null;
-}
-
-export async function getMedicines(): Promise<Medicine[]> {
-    const userId = await getUserId();
+export async function getMedicines(userId: string): Promise<Medicine[]> {
     if (!userId) return [];
 
     try {
@@ -33,8 +22,7 @@ export async function getMedicines(): Promise<Medicine[]> {
     }
 }
 
-export async function getUserStats(): Promise<{ points: number; streak: number }> {
-    const userId = await getUserId();
+export async function getUserStats(userId: string): Promise<{ points: number; streak: number }> {
     if (!userId) return { points: 0, streak: 0 };
     
     try {
@@ -54,8 +42,7 @@ export async function getUserStats(): Promise<{ points: number; streak: number }
     }
 }
 
-export async function updateIntake(medicineId: string, medicineName: string, scheduledAt: string, status: 'taken' | 'missed') {
-    const userId = await getUserId();
+export async function updateIntake(userId: string, medicineId: string, medicineName: string, scheduledAt: string, status: 'taken' | 'missed') {
     if (!userId) throw new Error("User not authenticated");
 
     try {
@@ -73,9 +60,15 @@ export async function updateIntake(medicineId: string, medicineName: string, sch
         // Update points if taken
         if (status === 'taken') {
             const userStatsRef = doc(db, 'userStats', userId);
-            await updateDoc(userStatsRef, {
-                points: increment(10)
-            });
+             // Make sure the doc exists before trying to update it
+            const docSnap = await getDoc(userStatsRef);
+            if (docSnap.exists()) {
+                await updateDoc(userStatsRef, {
+                    points: increment(10)
+                });
+            } else {
+                await setDoc(userStatsRef, { points: 10, streak: 0 });
+            }
         }
         
         revalidatePath('/dashboard');
@@ -90,8 +83,7 @@ export async function updateIntake(medicineId: string, medicineName: string, sch
 }
 
 
-export async function getHistory(): Promise<MedicineIntake[]> {
-    const userId = await getUserId();
+export async function getHistory(userId: string): Promise<MedicineIntake[]> {
     if (!userId) return [];
     
     try {

@@ -11,7 +11,8 @@ import { useState, FormEvent, useEffect } from 'react';
 
 export default function LoginPage() {
   const { login, user } = useAuth();
-  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -23,8 +24,11 @@ export default function LoginPage() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
-      login(name);
+    if (email.trim() && password.trim()) {
+      // In a real app, you'd validate this against a backend.
+      // For this demo, we'll just derive the name from the email.
+      const name = email.split('@')[0];
+      login(name, email);
     }
   };
 
@@ -38,19 +42,25 @@ export default function LoginPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Name (for demo)</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="name"
-                type="text"
-                placeholder="John Doe"
+                id="email"
+                type="email"
+                placeholder="john@example.com"
                 required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required defaultValue="password123" />
+              <Input 
+                id="password" 
+                type="password" 
+                required 
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
             <Button type="submit" className="w-full rounded-full">
               Login

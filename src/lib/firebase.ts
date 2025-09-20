@@ -1,7 +1,6 @@
 'use client';
 
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
@@ -13,12 +12,6 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
 const db = getFirestore(app);
 
-// Sign in anonymously
-signInAnonymously(auth).catch(error => {
-  console.error('Anonymous sign-in failed:', error);
-});
-
-export { app, auth, db, onAuthStateChanged };
+export { app, db };

@@ -4,7 +4,6 @@ import { extractMedicineDetails } from "@/ai/flows/extract-medicine-details";
 import { z } from "zod";
 import { db } from '@/lib/firebase';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { auth } from '@/lib/firebase';
 import { revalidatePath } from "next/cache";
 
 const actionSchema = z.object({
@@ -43,7 +42,7 @@ const addMedicineSchema = z.object({
   duration: z.coerce.number().min(1, 'Duration must be at least 1 day.'),
   quantity: z.coerce.number().min(1, 'Quantity is required.'),
   photoUrl: z.string().url('A photo URL is required.'),
-  userId: z.string(),
+  userId: z.string().min(1, 'User ID is required.'),
 });
 
 export async function addMedicine(data: unknown) {

@@ -1,9 +1,14 @@
+'use client';
+
 import AppLayout from "@/components/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { getHistory } from "@/services/firestore";
 import { MedicineIntake } from "@/lib/types";
 import { CheckCircle2, XCircle, Pill } from "lucide-react";
 import { format, isToday, isYesterday, parseISO } from 'date-fns';
+import { useAuth } from "@/context/AuthContext";
+import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const groupHistoryByDate = (history: MedicineIntake[]) => {
     return history.reduce((acc, item) => {
@@ -23,9 +28,39 @@ const formatDateHeading = (dateStr: string) => {
     return format(date, 'MMMM d, yyyy');
 }
 
+export default function HistoryPage() {
+    const { user } = useAuth();
+    const [history, setHistory] = useState<MedicineIntake[]>([]);
+    const [loading, setLoading] = useState(true);
 
-export default async function HistoryPage() {
-    const history = await getHistory();
+    useEffect(() => {
+        if (user) {
+            setLoading(true);
+            getHistory(user.uid).then(data => {
+                setHistory(data);
+                setLoading(false);
+            });
+        }
+    }, [user]);
+    
+    if (loading) {
+        return (
+             <AppLayout>
+                <div className="space-y-6">
+                    <div>
+                        <h1 className="text-2xl font-bold font-headline">Medicine History</h1>
+                        <p className="text-muted-foreground">
+                            A log of your medication adherence.
+                        </p>
+                    </div>
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                    <Skeleton className="h-20 w-full" />
+                </div>
+            </AppLayout>
+        )
+    }
+
     const groupedHistory = groupHistoryByDate(history);
     const sortedDates = Object.keys(groupedHistory).sort((a,b) => b.localeCompare(a));
     

@@ -12,6 +12,8 @@ import { useState, FormEvent, useEffect } from 'react';
 export default function SignupPage() {
   const { login, user } = useAuth();
   const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -23,8 +25,8 @@ export default function SignupPage() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    if (name.trim()) {
-      login(name);
+    if (name.trim() && email.trim() && password.trim()) {
+      login(name, email);
     }
   };
 
@@ -50,11 +52,24 @@ export default function SignupPage() {
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="john@example.com" required />
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="john@example.com" 
+                required 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                />
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input id="password" type="password" required />
+              <Input 
+                id="password" 
+                type="password" 
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+               />
             </div>
             <Button type="submit" className="w-full rounded-full">
               Create Account
