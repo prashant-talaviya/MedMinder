@@ -14,7 +14,6 @@ export interface Medicine {
   use: string;
   description: string;
   schedule: string[]; // e.g., ["08:00", "14:00", "20:00"]
-  startDate: string; // ISO date string
   duration: number; // in days
   quantity: number;
   photoUrl: string;

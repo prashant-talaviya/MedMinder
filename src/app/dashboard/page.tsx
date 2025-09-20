@@ -55,7 +55,7 @@ export default function DashboardPage() {
                 <NextReminder medicines={medicines} />
                 
                 <div>
-                    <h2 className="text-xl font-bold font-headline mb-4">Today&apos;s Schedule</h2>
+                    <h2 className="text-xl font-bold font-headline mb-4">Today's Schedule</h2>
                     <div className="space-y-4">
                         {todaysSchedule.length > 0 ? (
                             todaysSchedule.map((dose, index) => {
