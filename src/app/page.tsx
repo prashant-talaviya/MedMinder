@@ -53,11 +53,11 @@ export default function WelcomePage() {
         </p>
         <div className="mt-8 w-full aspect-video relative">
           <Image
-            src="https://picsum.photos/seed/medminder-welcome/600/400"
-            alt="Person organizing pills"
+            src="https://picsum.photos/seed/medication-stress/600/400"
+            alt="A person looking overwhelmed by different medications"
             fill
             className="rounded-lg object-cover"
-            data-ai-hint="health medicine"
+            data-ai-hint="medication stress"
           />
         </div>
 
