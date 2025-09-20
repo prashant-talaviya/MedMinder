@@ -42,7 +42,7 @@ export async function getUserStats(userId: string): Promise<{ points: number; st
     }
 }
 
-export async function updateIntake(userId: string, medicineId: string, medicineName: string, scheduledAt: string, status: 'taken' | 'missed') {
+export async function updateIntake({userId, medicineId, medicineName, scheduledAt, status}: {userId: string, medicineId: string, medicineName: string, scheduledAt: string, status: 'taken' | 'missed'}) {
     if (!userId) throw new Error("User not authenticated");
 
     try {

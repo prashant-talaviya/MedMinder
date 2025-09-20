@@ -10,12 +10,13 @@ import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
+import type { updateIntake } from '@/services/firestore';
 
 interface MedicineCardProps {
   medicine: Medicine;
   time: string;
   isPending: boolean;
-  updateIntake: (userId: string, medicineId: string, medicineName: string, scheduledAt: string, status: 'taken' | 'missed') => Promise<any>;
+  updateIntake: typeof updateIntake;
   userId: string;
 }
 
@@ -27,7 +28,13 @@ export default function MedicineCard({ medicine, time, isPending, updateIntake, 
   const handleTake = async () => {
     setIsSubmitting(true);
     try {
-        await updateIntake(userId, medicine.id, medicine.name, time, 'taken');
+        await updateIntake({
+            userId, 
+            medicineId: medicine.id, 
+            medicineName: medicine.name, 
+            scheduledAt: time, 
+            status: 'taken'
+        });
         setTaken(true);
         toast({
             title: "Dose Confirmed!",
