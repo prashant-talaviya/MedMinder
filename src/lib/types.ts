@@ -1,4 +1,7 @@
+import { ObjectId } from 'mongodb';
+
 export interface User {
+  _id?: ObjectId;
   uid: string;
   name: string;
   email: string;
@@ -6,7 +9,7 @@ export interface User {
 }
 
 export interface Medicine {
-  id: string;
+  _id?: ObjectId;
   userId: string;
   name: string;
   dosage: string; // e.g., "1-0-1"
@@ -17,16 +20,23 @@ export interface Medicine {
   duration: number; // in days
   quantity: number;
   photoUrl: string;
-  createdAt: any;
+  createdAt: Date;
 }
 
 export interface MedicineIntake {
-  id: string;
+  _id?: ObjectId;
   userId: string;
   medicineId: string;
   medicineName: string;
-  takenAt: string; // ISO date-time string
+  takenAt: Date; // Date object
   scheduledAt: string; // e.g., "08:00"
   status: 'taken' | 'missed' | 'pending';
   points: number;
+}
+
+export interface UserStats {
+  _id?: ObjectId;
+  userId: string;
+  points: number;
+  streak: number;
 }

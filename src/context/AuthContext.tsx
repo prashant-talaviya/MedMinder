@@ -6,24 +6,14 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 
 interface AuthContextType {
   user: User | null;
-  login: (name: string, email: string) => void;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (name: string, email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
+  updateUser: (updates: Partial<User>) => void;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Simple hashing function for a mock user ID
-const simpleHash = (s: string) => {
-  let hash = 0;
-  for (let i = 0; i < s.length; i++) {
-    const char = s.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash |= 0; // Convert to 32bit integer
-  }
-  return 'user_' + Math.abs(hash).toString(16);
-};
-
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -45,17 +35,56 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
+  const login = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-  const login = (name: string, email: string) => {
-    const mockUser: User = {
-      uid: simpleHash(email), // Create a consistent mock UID from the email
-      name: name,
-      email: email,
-      avatarUrl: `https://i.pravatar.cc/150?u=${simpleHash(email)}`,
-    };
-    localStorage.setItem('medminder-user', JSON.stringify(mockUser));
-    setUser(mockUser);
-    router.push('/dashboard');
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem('medminder-user', JSON.stringify(data.user));
+        setUser(data.user);
+        router.push('/dashboard');
+        return { success: true };
+      } else {
+        return { success: false, error: data.error };
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, error: 'Network error. Please try again.' };
+    }
+  };
+
+  const signup = async (name: string, email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name, email, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem('medminder-user', JSON.stringify(data.user));
+        setUser(data.user);
+        router.push('/dashboard');
+        return { success: true };
+      } else {
+        return { success: false, error: data.error };
+      }
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { success: false, error: 'Network error. Please try again.' };
+    }
   };
 
   const logout = () => {
@@ -64,7 +93,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/');
   };
 
-  const value = { user, login, logout, loading };
+  const updateUser = (updates: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...updates };
+      setUser(updatedUser);
+      localStorage.setItem('medminder-user', JSON.stringify(updatedUser));
+    }
+  };
+
+  const value = { user, login, signup, logout, updateUser, loading };
 
   return (
     <AuthContext.Provider value={value}>

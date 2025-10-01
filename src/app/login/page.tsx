@@ -8,12 +8,18 @@ import { useAuth } from '@/context/AuthContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, FormEvent, useEffect } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import BGImage from '../../../src/img/background.png';
+import Header from '@/components/Header';
+
 
 export default function LoginPage() {
   const { login, user } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
@@ -21,19 +27,27 @@ export default function LoginPage() {
     }
   }, [user, router]);
 
-
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (email.trim() && password.trim()) {
-      // In a real app, you'd validate this against a backend.
-      // For this demo, we'll just derive the name from the email.
-      const name = email.split('@')[0];
-      login(name, email);
+      setIsLoading(true);
+      const result = await login(email, password);
+      setIsLoading(false);
+      
+      if (!result.success) {
+        toast({
+          title: "Login Failed",
+          description: result.error || "Please check your credentials and try again.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <div className="min-h-screen bg-cover bg-center bg-no-repeat" style={{ backgroundImage: `url(${BGImage.src})` }}>
+      <Header />
+      <div className="flex items-center justify-center p-4 pt-20">
       <Card className="w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-2xl font-headline">Welcome Back</CardTitle>
@@ -62,8 +76,8 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
               />
             </div>
-            <Button type="submit" className="w-full rounded-full">
-              Login
+            <Button type="submit" className="w-full rounded-full" disabled={isLoading}>
+              {isLoading ? 'Logging in...' : 'Login'}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
@@ -74,6 +88,7 @@ export default function LoginPage() {
           </div>
         </CardContent>
       </Card>
+      </div>
     </div>
   );
 }

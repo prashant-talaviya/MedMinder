@@ -1,8 +1,9 @@
 'use client';
 
 import AppLayout from "@/components/AppLayout";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import { Card, CardContent } from "@/components/ui/card";
-import { getHistory } from "@/services/firestore";
+import { getHistory } from "@/services/mongodb";
 import { MedicineIntake } from "@/lib/types";
 import { CheckCircle2, XCircle, Pill } from "lucide-react";
 import { format, isToday, isYesterday, parseISO } from 'date-fns';
@@ -12,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const groupHistoryByDate = (history: MedicineIntake[]) => {
     return history.reduce((acc, item) => {
-        const date = format(parseISO(item.takenAt), 'yyyy-MM-dd');
+        const date = format(item.takenAt, 'yyyy-MM-dd');
         if (!acc[date]) {
             acc[date] = [];
         }
@@ -22,13 +23,13 @@ const groupHistoryByDate = (history: MedicineIntake[]) => {
 };
 
 const formatDateHeading = (dateStr: string) => {
-    const date = parseISO(dateStr);
+    const date = new Date(dateStr);
     if (isToday(date)) return 'Today';
     if (isYesterday(date)) return 'Yesterday';
     return format(date, 'MMMM d, yyyy');
 }
 
-export default function HistoryPage() {
+function HistoryContent() {
     const { user } = useAuth();
     const [history, setHistory] = useState<MedicineIntake[]>([]);
     const [loading, setLoading] = useState(true);
@@ -80,7 +81,7 @@ export default function HistoryPage() {
                     <h2 className="font-bold mb-2">{formatDateHeading(date)}</h2>
                     <div className="space-y-2">
                     {groupedHistory[date].map(item => (
-                        <Card key={item.id}>
+                        <Card key={item._id?.toString() || 'unknown'}>
                             <CardContent className="p-4 flex items-center justify-between gap-4">
                                 <div className="flex items-center gap-4">
                                 {item.status === 'taken' ? (
@@ -114,5 +115,13 @@ export default function HistoryPage() {
         </div>
       </div>
     </AppLayout>
+  );
+}
+
+export default function HistoryPage() {
+  return (
+    <ProtectedRoute>
+      <HistoryContent />
+    </ProtectedRoute>
   );
 }

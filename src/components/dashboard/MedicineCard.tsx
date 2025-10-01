@@ -1,16 +1,23 @@
 'use client';
 
 import Image from 'next/image';
-import { Pill, Clock } from 'lucide-react';
+import { Pill, Clock, Edit } from 'lucide-react';
+import Link from 'next/link';
 
 import { Medicine } from '@/lib/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import type { updateIntake } from '@/services/firestore';
+import type { updateIntake } from '@/services/mongodb';
+
+interface TakenDose {
+  medicineId: string;
+  scheduleTime: string;
+  date: string;
+}
 
 interface MedicineCardProps {
   medicine: Medicine;
@@ -18,19 +25,62 @@ interface MedicineCardProps {
   isPending: boolean;
   updateIntake: typeof updateIntake;
   userId: string;
+  takenDoses?: TakenDose[];
 }
 
-export default function MedicineCard({ medicine, time, isPending, updateIntake, userId }: MedicineCardProps) {
+export default function MedicineCard({ medicine, time, isPending, updateIntake, userId, takenDoses = [] }: MedicineCardProps) {
   const [taken, setTaken] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  // Check if this medicine was taken through the alarm system
+  const isTakenViaAlarm = takenDoses.some(dose => {
+    const medicineIdMatches = dose.medicineId === medicine._id?.toString();
+    const dateMatches = dose.date === new Date().toISOString().split('T')[0];
+    
+    // Convert display time back to 24-hour format for comparison
+    const [timeStr, period] = time.split(' ');
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const displayTime = period === 'PM' && hours !== 12 ? `${hours + 12}:${minutes.toString().padStart(2, '0')}` : 
+                       period === 'AM' && hours === 12 ? `00:${minutes.toString().padStart(2, '0')}` :
+                       `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    
+    const timeMatches = dose.scheduleTime === displayTime;
+    
+    console.log('🔍 DEBUG: MedicineCard comparison for', medicine.name, {
+      medicineId: medicine._id?.toString(),
+      doseMedicineId: dose.medicineId,
+      medicineIdMatches,
+      displayTime,
+      doseScheduleTime: dose.scheduleTime,
+      timeMatches,
+      dateMatches,
+      isMatch: medicineIdMatches && dateMatches && timeMatches
+    });
+    
+    return medicineIdMatches && dateMatches && timeMatches;
+  });
+
+  // Update taken state when alarm system marks it as taken
+  useEffect(() => {
+    console.log('🔍 DEBUG: MedicineCard useEffect for', medicine.name, {
+      isTakenViaAlarm,
+      takenDosesCount: takenDoses.length,
+      currentTakenState: taken
+    });
+    
+    if (isTakenViaAlarm) {
+      console.log('✅ Setting taken=true for', medicine.name);
+      setTaken(true);
+    }
+  }, [isTakenViaAlarm, takenDoses.length]);
 
   const handleTake = async () => {
     setIsSubmitting(true);
     try {
         await updateIntake({
             userId, 
-            medicineId: medicine.id, 
+            medicineId: medicine._id?.toString() || '', 
             medicineName: medicine.name, 
             scheduledAt: time, 
             status: 'taken'
@@ -51,7 +101,17 @@ export default function MedicineCard({ medicine, time, isPending, updateIntake, 
     }
   };
 
-  const status = taken ? 'Taken' : isPending ? 'Pending' : 'Missed';
+  // Use isTakenViaAlarm directly instead of relying on local taken state
+  const status = (taken || isTakenViaAlarm) ? 'Taken' : isPending ? 'Pending' : 'Missed';
+  
+  // Debug status calculation
+  console.log('🔍 DEBUG: Status calculation for', medicine.name, {
+    taken,
+    isPending,
+    isTakenViaAlarm,
+    status,
+    takenDosesCount: takenDoses.length
+  });
   
   const statusColors = {
     Taken: 'bg-green-100 text-green-800 border-green-200',
@@ -86,11 +146,18 @@ export default function MedicineCard({ medicine, time, isPending, updateIntake, 
             <span>{time}</span>
           </p>
         </div>
-        {isPending && !taken && (
+        <div className="flex gap-2">
+          {isPending && !taken && (
             <Button onClick={handleTake} className="rounded-full" disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="animate-spin" /> : 'Take'}
             </Button>
-        )}
+          )}
+          <Link href="/medicines">
+            <Button variant="outline" size="sm" className="rounded-full">
+              <Edit className="h-4 w-4" />
+            </Button>
+          </Link>
+        </div>
       </CardContent>
     </Card>
   );

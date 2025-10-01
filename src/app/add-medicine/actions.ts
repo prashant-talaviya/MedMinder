@@ -2,8 +2,7 @@
 
 import { extractMedicineDetails } from "@/ai/flows/extract-medicine-details";
 import { z } from "zod";
-import { db } from '@/lib/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { addMedicine } from '@/services/mongodb';
 import { revalidatePath } from "next/cache";
 
 export async function analyzeMedicineImage(formData: FormData) {
@@ -43,21 +42,10 @@ const addMedicineSchema = z.object({
   userId: z.string().min(1, 'User ID is required.'),
 });
 
-export async function addMedicine(data: unknown) {
+export async function addMedicineAction(data: unknown) {
     try {
         const parsedData = addMedicineSchema.parse(data);
-
-        await addDoc(collection(db, 'medicines'), {
-            ...parsedData,
-            // Ensure photoUrl is never null when writing to Firestore
-            photoUrl: parsedData.photoUrl || "https://picsum.photos/seed/med-placeholder/200/200", 
-            createdAt: serverTimestamp(),
-        });
-
-        revalidatePath('/dashboard');
-        
-        return { success: true };
-
+        return await addMedicine(parsedData);
     } catch(error) {
         console.error("Error adding medicine:", error);
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";

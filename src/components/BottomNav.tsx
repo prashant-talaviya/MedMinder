@@ -3,14 +3,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, PlusCircle, History, Search } from 'lucide-react';
+import { Home, PlusCircle, History, Stethoscope, Pill, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/dashboard', icon: Home, label: 'Home' },
+  { href: '/medicines', icon: Pill, label: 'Medicines' },
   { href: '/add-medicine', icon: PlusCircle, label: 'Add' },
-  { href: '/lookup', icon: Search, label: 'Lookup' },
+  { href: '/lookup', icon: Stethoscope, label: 'Checker' },
   { href: '/history', icon: History, label: 'History' },
+  { href: '/profile', icon: User, label: 'Profile' },
 ];
 
 export default function BottomNav() {

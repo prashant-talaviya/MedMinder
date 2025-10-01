@@ -2,6 +2,7 @@
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
+// Using public favicon.ico as static asset
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   DropdownMenu,
@@ -11,7 +12,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { LogOut, PlusCircle, UserCircle, Search, History } from 'lucide-react';
+import { LogOut, PlusCircle, UserCircle, Pill, History, Home, Stethoscope, Users } from 'lucide-react';
 import { Button } from './ui/button';
 import Link from 'next/link';
 
@@ -21,33 +22,56 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-40 w-full border-b bg-card/80 backdrop-blur-sm">
       <div className="container flex h-16 items-center justify-between px-4 md:px-6">
-        <h1 className="text-xl font-bold text-primary font-headline">MedMinder</h1>
+      <Link href="/dashboard" className="flex items-center gap-2">
+  <img src="/favicon.ico" alt="MedMinder" className="w-7 h-7" />
+  <h1 className="text-xl font-bold text-primary font-headline">MedMinder</h1>
+</Link>
         <div className="flex items-center gap-4">
-           <nav className="hidden md:flex items-center gap-2">
-             <Button variant="ghost" asChild>
-                <Link href="/dashboard">
-                    Dashboard
-                </Link>
-             </Button>
-             <Button variant="ghost" asChild>
-                <Link href="/lookup">
-                    <Search className="mr-2" />
-                    Lookup
-                </Link>
-             </Button>
-             <Button variant="ghost" asChild>
-                <Link href="/history">
-                    <History className="mr-2" />
-                    History
-                </Link>
-             </Button>
-            </nav>
-          <Button asChild className="hidden md:inline-flex rounded-full" size="sm">
-            <Link href="/add-medicine">
-              <PlusCircle />
-              Add Medicine
-            </Link>
-          </Button>
+           {user ? (
+             <nav className="hidden md:flex items-center gap-2">
+               <Button variant="ghost" asChild className="flex items-center gap-2">
+                  <Link href="/dashboard">
+                      <Home className="h-4 w-4" />
+                      Dashboard
+                  </Link>
+               </Button>
+               <Button variant="ghost" asChild className="flex items-center gap-2">
+                  <Link href="/lookup">
+                      <Stethoscope className="h-4 w-4" />
+                      Medicine Checker
+                  </Link>
+               </Button>
+               <Button variant="ghost" asChild className="flex items-center gap-2">
+                  <Link href="/history">
+                      <History className="h-4 w-4" />
+                      My History
+                  </Link>
+               </Button>
+              </nav>
+           ) : (
+             <nav className="hidden md:flex items-center gap-2">
+               <Button variant="ghost" asChild className="flex items-center gap-2">
+                  <Link href="/login">
+                      <Users className="h-4 w-4" />
+                      Login
+                  </Link>
+               </Button>
+               <Button asChild className="flex items-center gap-2">
+                  <Link href="/signup">
+                      <PlusCircle className="h-4 w-4" />
+                      Sign Up
+                  </Link>
+               </Button>
+              </nav>
+           )}
+          {user && (
+            <Button asChild className="hidden md:inline-flex rounded-full" size="sm">
+              <Link href="/add-medicine">
+                <PlusCircle />
+                Add Medicine
+              </Link>
+            </Button>
+          )}
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -71,9 +95,11 @@ export default function Header() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem disabled>
-                  <UserCircle className="mr-2 h-4 w-4" />
-                  <span>Profile</span>
+                <DropdownMenuItem asChild>
+                  <Link href="/profile">
+                    <UserCircle className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
